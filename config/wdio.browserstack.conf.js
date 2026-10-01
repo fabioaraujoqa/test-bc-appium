@@ -1,4 +1,4 @@
-// Executar:  npm run bs-android | npm run bs-android:smoke
+// Executar:  npm run bs-android  (smoke: npm run bs-android -- --spec tests/specs/smoke.spec.js)
 //            npm run bs-ios (exige .ipa de aparelho real em BROWSERSTACK_APP_ID_IOS)
 // Credenciais e app id: .env (ver .env.example) ou secrets do GitHub Actions.
 const path = require('node:path');
@@ -24,7 +24,7 @@ const aparelho = ehIos
 
 const identificadorDispositivo = `${ehIos ? 'iOS' : 'Android'} · browserstack (${aparelho.nome})`;
 const slugDispositivo = `${ehIos ? 'ios' : 'android'}-browserstack-${aparelho.nome}`.replace(/[^a-z0-9.-]+/gi, '-').toLowerCase();
-const evidencias = criarHooksDeEvidencias(path.join(raizProjeto, 'screenshots', 'bc', slugDispositivo));
+const evidencias = criarHooksDeEvidencias(path.join(raizProjeto, 'screenshots', slugDispositivo));
 const dirSpecs = path.join(raizProjeto, 'tests/specs');
 
 exports.config = {

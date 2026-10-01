@@ -1,6 +1,6 @@
 /**
  * Página Base genérica: métodos comuns a qualquer app (Android e iOS).
- * O que é específico do app fica em tests/pageobjects/bc.base.page.js.
+ * O que é específico do app fica em tests/pageobjects/app.base.page.js.
  */
 class PaginaBase {
   obterElemento(localizador) {

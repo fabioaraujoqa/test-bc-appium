@@ -136,7 +136,7 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: npm run allure:reset && npx wdio run config/wdio.bc.conf.js $SPEC_ARGS
+          script: npm run allure:reset && npx wdio run config/wdio.conf.js $SPEC_ARGS
 
       # Os passos abaixo rodam mesmo com teste falhando, para o relatório sair
       - name: Registrar no Allure se nenhum teste rodou
@@ -279,7 +279,7 @@ jobs:
           JSON
 
       - name: Gerar relatório Allure
-        run: npm run report:bc:generate
+        run: npm run report:generate
 
       - name: Resumo da execução
         run: |

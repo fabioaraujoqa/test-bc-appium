@@ -150,7 +150,7 @@ allure-report/
 # screenshots do appium-mcp
 mcp-screenshots/
 
-# ===== Projeto bc =====
+# ===== Projeto =====
 # Apps de teste (grandes, fora do git)
 app/*.apk
 app/*.app/
@@ -158,7 +158,7 @@ app/*.ipa
 # Evidências e resultados
 screenshots/
 test-results/
-# Relatórios salvos com npm run report:bc:arquivo
+# Relatórios salvos com npm run report:arquivo
 relatorios/
 
 # Logs do serviço do BrowserStack

@@ -1,8 +1,8 @@
-import BcBasePage from './bc.base.page'
+import AppBasePage from './app.base.page'
 import MenuPage from './menu.page'
 
 // Tela "Permissions": só é acessível pelo menu lateral
-class PermissionsPage extends BcBasePage {
+class PermissionsPage extends AppBasePage {
   get tela() { return $('~Permissions-screen') }
 
   // camera, microphone, location, photos

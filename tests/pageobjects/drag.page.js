@@ -1,9 +1,9 @@
-import BcBasePage from './bc.base.page'
+import AppBasePage from './app.base.page'
 
 // Posições da grade 3x3: l/c/r = esquerda/centro/direita, 1-3 = linha
 const POSICOES = ['l1', 'c1', 'r1', 'l2', 'c2', 'r2', 'l3', 'c3', 'r3']
 
-class DragPage extends BcBasePage {
+class DragPage extends AppBasePage {
   constructor() { super('Drag') }
 
   // Seletores

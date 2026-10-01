@@ -1,7 +1,7 @@
-import BcBasePage from './bc.base.page'
+import AppBasePage from './app.base.page'
 
 // Menu lateral, aberto pelo item "Menu" da barra inferior
-class MenuPage extends BcBasePage {
+class MenuPage extends AppBasePage {
   constructor() { super('Menu') }
 
   get tela() { return $('~tab-side-menu-panel') }

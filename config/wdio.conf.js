@@ -1,17 +1,17 @@
-// Executar:  npm run test:bc            (Android emulador, perfil padrão)
-//            npm run test:bc:celular    (Android físico: CELULAR_UDID no .env)
-//            npm run test:bc:ios        (iOS simulador: IOS_DEVICE_NAME/VERSION no .env)
+// Executar:  npm run test:all            (Android emulador, perfil padrão)
+//            npm run test:celular    (Android físico: CELULAR_UDID no .env)
+//            npm run test:ios        (iOS simulador: IOS_DEVICE_NAME/VERSION no .env)
 // Perfil:    DEVICE_PROFILE=emulador | celular | tablet | simulador
 // Portas e regras de cada perfil: config/env.loader.js (PERFIS). Valores da máquina: .env (ver .env.example)
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const allureReporter = require('@wdio/allure-reporter').default;
-const { carregarEnvBc, identificarDispositivo } = require('./env.loader');
+const { carregarEnvDoPerfil, identificarDispositivo } = require('./env.loader');
 const { criarHooksDeEvidencias, deveTirarScreenshotFinal } = require('./video.hooks');
 
 const raizProjeto = path.resolve(__dirname, '..');
-const env = carregarEnvBc();
+const env = carregarEnvDoPerfil();
 const ehIos = env.PLATFORM === 'ios';
 const { rotulo: identificadorDispositivo, slug: slugDispositivo } = identificarDispositivo(env);
 
@@ -22,7 +22,7 @@ const dirSpecs = path.join(raizProjeto, 'tests/specs');
 
 // Subpasta por dispositivo: execuções em paralelo não sobrescrevem as evidências umas das outras
 const evidencias = criarHooksDeEvidencias(
-  path.join(raizProjeto, env.SCREENSHOT_DIR || 'screenshots', 'bc', slugDispositivo),
+  path.join(raizProjeto, env.SCREENSHOT_DIR || 'screenshots', slugDispositivo),
 );
 
 // Emulador: usa o UDID se ele já estiver no adb; senão o Appium sobe o AVD sozinho
@@ -134,8 +134,8 @@ exports.config = {
   },
 
   async before() {
-    const BcBasePage = require('../tests/pageobjects/bc.base.page').default;
-    await new BcBasePage().reiniciarNaTelaInicial();
+    const AppBasePage = require('../tests/pageobjects/app.base.page').default;
+    await new AppBasePage().reiniciarNaTelaInicial();
   },
 
   async beforeTest() {

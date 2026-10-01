@@ -255,4 +255,4 @@ Mapeado via **appium-mcp** em 01/10/2026 no simulador **iPhone 16 / iOS 18.5**, 
 1. Abra o emulador: `npm run start:emulator`.
 2. Peça ao Claude Code para mapear a tela pelo **appium-mcp** (configurado em `.mcp.json`).
 3. Ferramentas úteis do MCP: `generate_locators`, `appium_get_page_source` e `appium_find_element`.
-4. Encerre a sessão do MCP antes de rodar os testes (`npm run test:bc` e variantes).
+4. Encerre a sessão do MCP antes de rodar os testes (`npm run test:all` e variantes).

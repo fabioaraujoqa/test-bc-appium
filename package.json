@@ -15,7 +15,7 @@
     "bs-android": "npm run allure:reset && wdio run config/wdio.browserstack.conf.js",
     "report:generate": "allure generate allure-results --clean -o allure-report",
     "report": "npm run report:generate && allure open allure-report",
-    "report:arquivo": "D=\"relatorios/$(date +%Y-%m-%d_%H%M)\" && allure generate allure-results --single-file --clean -o \"$D\" && (cp -r screenshots/bc \"$D/evidencias-de-falha\" 2>/dev/null || true) && echo \"Relatório salvo em $D/index.html\""
+    "report:arquivo": "D=\"relatorios/$(date +%Y-%m-%d_%H%M)\" && allure generate allure-results --single-file --clean -o \"$D\" && (cp -r screenshots \"$D/evidencias-de-falha\" 2>/dev/null || true) && echo \"Relatório salvo em $D/index.html\""
   },
   "keywords": [],
   "author": "",

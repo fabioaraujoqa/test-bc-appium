@@ -31,28 +31,28 @@ Preencha o `.env` (ignorado pelo git). Só entra ali o que é **segredo** ou **m
 | `IOS_DEVICE_NAME` / `IOS_PLATFORM_VERSION` | Simulador iOS (padrão `iPhone 16` / `18.5`) |
 | `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY` / `BROWSERSTACK_APP_ID` | Credenciais e `app_url` (`bs://...`) do app no BrowserStack |
 
-Qualquer chave também pode vir do terminal, que tem precedência: `CELULAR_UDID=xxx npm run test:bc:celular`.
+Qualquer chave também pode vir do terminal, que tem precedência: `CELULAR_UDID=xxx npm run test:celular`.
 
 ## Execução dos testes
 
 ```bash
 npm run start:emulator             # sobe o AVD, se ainda não estiver rodando
 
-npm run test:bc                    # Android, emulador (perfil padrão)
-npm run test:bc:celular            # Android, aparelho físico
-npm run test:bc:ios                # iOS, simulador
+npm run test:all                    # Android, emulador (perfil padrão)
+npm run test:celular            # Android, aparelho físico
+npm run test:ios                # iOS, simulador
 npm run bs-android                 # Android, BrowserStack
-npm run test:bc:devices            # emulador + celular + simulador, em paralelo
+npm run test:devices            # emulador + celular + simulador, em paralelo
 
-npm run test:bc -- --spec tests/specs/android/form.spec.js   # um spec só
+npm run test:all -- --spec tests/specs/android/form.spec.js   # um spec só
 ```
 
 | Comando | Descrição |
 |---------|-----------|
-| `test:bc:smoke` | Só o smoke, comum a Android e iOS (outro aparelho: `DEVICE_PROFILE=celular npm run test:bc:smoke`) |
-| `test:bc:devices -- --sequencial` | Os três aparelhos, um por vez |
-| `report:bc` | Gera e abre o relatório Allure |
-| `report:bc:arquivo` | Relatório em arquivo único (abre com dois cliques), com as evidências de falha, em `relatorios/<data_hora>/` |
+| `test:smoke` | Só o smoke, comum a Android e iOS (outro aparelho: `DEVICE_PROFILE=celular npm run test:smoke`) |
+| `test:devices -- --sequencial` | Os três aparelhos, um por vez |
+| `report` | Gera e abre o relatório Allure |
+| `report:arquivo` | Relatório em arquivo único (abre com dois cliques), com as evidências de falha, em `relatorios/<data_hora>/` |
 
 ## Cenários de teste
 
@@ -86,16 +86,16 @@ Os specs não têm dados fixos:
 O helper [`tests/utils/usuarios.js`](tests/utils/usuarios.js) entrega os dois aos specs. O e-mail de cadastro válido é único por execução (`{timestamp}`), e cada item de `cadastroInvalido` (e-mail sem @, senha curta, confirmação diferente) vira um teste próprio que confere a mensagem de erro esperada. Para um cenário novo, basta acrescentar um item no JSON.
 
 ### Page Objects
-Uma classe por tela em `tests/pageobjects/`, estendendo `base.page.js` (genérico) e `bc.base.page.js` (do app: `reiniciarNaTelaInicial()` e `porTexto()`, que resolve o seletor certo para Android e iOS). Os alertas ficam em um componente próprio (`components/alert.component.js`).
+Uma classe por tela em `tests/pageobjects/`, estendendo `base.page.js` (genérico) e `app.base.page.js` (do app: `reiniciarNaTelaInicial()` e `porTexto()`, que resolve o seletor certo para Android e iOS). Os alertas ficam em um componente próprio (`components/alert.component.js`).
 
 ### Perfis de dispositivo
-`DEVICE_PROFILE` escolhe o aparelho sem editar código. Cada perfil tem sua porta de Appium e `systemPort`/`wdaLocalPort`, o que permite rodar vários aparelhos ao mesmo tempo (`scripts/test-bc-parallel.sh`).
+`DEVICE_PROFILE` escolhe o aparelho sem editar código. Cada perfil tem sua porta de Appium e `systemPort`/`wdaLocalPort`, o que permite rodar vários aparelhos ao mesmo tempo (`scripts/test-parallel.sh`).
 
 ### Relatório e evidências
 O Allure (`@wdio/allure-reporter`) traz, para cada teste:
 - o rótulo do aparelho (`Android · emulador (emulator-5554)`, `iOS · simulador (iPhone 16)`, `Android · browserstack (Google Pixel 6)`) nas abas **Suites** e **Timeline**, para comparar a mesma suíte entre aparelhos;
 - screenshot nomeado a cada `evidenciar()`, ou um screenshot final quando o teste não chama essa função;
-- em falha, vídeo (`.mp4`) + screenshot (`.png`) em `screenshots/bc/<aparelho>/`, separados por aparelho para execuções em paralelo não sobrescreverem evidências.
+- em falha, vídeo (`.mp4`) + screenshot (`.png`) em `screenshots/<aparelho>/`, separados por aparelho para execuções em paralelo não sobrescreverem evidências.
 
 ### Uso de Inteligência Artificial
 Agente usado como copiloto: **Claude (Anthropic)**, pelo GitHub Copilot com o modelo Claude Sonnet e pelo Claude Code.
@@ -126,7 +126,7 @@ O workflow [`.github/workflows/mobile-tests.yml`](.github/workflows/mobile-tests
 - **Allure (última execução na `main`):** [fabioaraujoqa.github.io/test-bc-appium](https://fabioaraujoqa.github.io/test-bc-appium/), combinado e separado por aparelho, com histórico de tendência.
 - **BrowserStack:** [última execução pública no App Automate](https://app-automate.browserstack.com/projects/Banco+Carrefour+-+App+Demo/builds/Android/3?tab=tests&testListView=spec&public_token=8c0b78bc1777d4ddf28fc454c83da22d8f38e887c6f70754faa668cc41a48151), com vídeo e logs de cada sessão.
 - **PR ou execução manual:** artefato `allure-report` na página da execução.
-- **Local:** `npm run report:bc`, ou `npm run report:bc:arquivo` para um arquivo único.
+- **Local:** `npm run report`, ou `npm run report:arquivo` para um arquivo único.
 
 ## Estrutura do projeto
 
@@ -134,13 +134,13 @@ O workflow [`.github/workflows/mobile-tests.yml`](.github/workflows/mobile-tests
 .
 ├── app/                          # android-app-wdio.apk e ios-app-wdio.app (fora do git)
 ├── config/
-│   ├── wdio.bc.conf.js           # aparelhos locais: monta as capabilities pelo perfil
+│   ├── wdio.conf.js           # aparelhos locais: monta as capabilities pelo perfil
 │   ├── wdio.browserstack.conf.js # BrowserStack
 │   ├── env.loader.js             # lê o .env e as regras de cada perfil
 │   └── video.hooks.js            # evidenciar(), screenshot final, vídeo de falha
 ├── tests/
 │   ├── fixtures/usuarios.json    # massa de cadastro (válida e inválida)
-│   ├── pageobjects/              # base.page.js, bc.base.page.js, components/ e uma page por tela
+│   ├── pageobjects/              # base.page.js, app.base.page.js, components/ e uma page por tela
 │   ├── specs/
 │   │   ├── smoke.spec.js         # comum a Android e iOS
 │   │   ├── android/

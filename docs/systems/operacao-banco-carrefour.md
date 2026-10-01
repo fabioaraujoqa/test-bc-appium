@@ -1,4 +1,4 @@
-# Operação da automação mobile (bc)
+# Operação da automação mobile
 
 Como rodar a suíte do app **WebdriverIO Demo 2.2.0** em cada aparelho (Android emulador, Android físico e iOS simulador), como o relatório separa os aparelhos e onde ficam as evidências. Os seletores de cada tela estão em [`docs/mapeamento-elementos.md`](../mapeamento-elementos.md).
 
@@ -8,20 +8,20 @@ Stack: WebdriverIO 9 + Appium 3 (UiAutomator2 / XCUITest) + Mocha + Allure.
 
 ```
 config/
-├── wdio.bc.conf.js            aparelhos locais: monta as capabilities pelo perfil
+├── wdio.conf.js            aparelhos locais: monta as capabilities pelo perfil
 ├── wdio.browserstack.conf.js  BrowserStack (Android ou iOS)
 ├── env.loader.js              carrega o .env (dotenv) e as regras de cada perfil (PERFIS)
 ├── video.hooks.js             evidenciar(), screenshot final, vídeo de falha
 └── appium-mcp.capabilities.json   usado só pelo MCP (.mcp.json)
 tests/
 ├── fixtures/usuarios.json     massa de cadastro (válida e inválida)
-├── pageobjects/               base.page.js (genérica), bc.base.page.js (do app) e uma page por tela
+├── pageobjects/               base.page.js (genérica), app.base.page.js (do app) e uma page por tela
 ├── specs/
 │   ├── smoke.spec.js          comum a Android e iOS
 │   ├── android/               roda nos perfis Android
 │   └── ios/                   roda no perfil simulador
 └── utils/usuarios.js          lê .env + fixture
-scripts/test-bc-parallel.sh    vários aparelhos, em paralelo ou em sequência
+scripts/test-parallel.sh    vários aparelhos, em paralelo ou em sequência
 app/                           android-app-wdio.apk e ios-app-wdio.app (fora do git)
 ```
 
@@ -72,7 +72,7 @@ O aparelho é escolhido pela variável `DEVICE_PROFILE` (padrão: `emulador`).
 | `tablet` | Android | `TABLET_UDID` | 4726 | systemPort 8202 |
 | `simulador` | iOS | `IOS_DEVICE_NAME`, `IOS_PLATFORM_VERSION`, `IOS_UDID` (opcional) | 4725 | wdaLocalPort 8100 |
 
-Para rodar com outro aparelho sem editar o `.env`: `CELULAR_UDID=XXXX npm run test:bc:celular`.
+Para rodar com outro aparelho sem editar o `.env`: `CELULAR_UDID=XXXX npm run test:celular`.
 
 ### Por que `deviceName` **e** `udid`
 
@@ -84,22 +84,22 @@ No perfil `emulador`, se o `emulator-5554` não estiver rodando, a config troca 
 
 | Objetivo | Comando |
 |---|---|
-| Suíte completa no emulador | `npm run test:bc` |
-| Suíte completa no celular | `npm run test:bc:celular` |
-| Suíte do iOS | `npm run test:bc:ios` |
-| Smoke | `npm run test:bc:smoke` (outro aparelho: `DEVICE_PROFILE=celular npm run test:bc:smoke`) |
-| Um spec só | `npm run test:bc -- --spec tests/specs/android/form.spec.js` |
-| Suíte nos 3 aparelhos **em paralelo** | `npm run test:bc:devices` |
-| Suíte nos 3 aparelhos, um por vez | `npm run test:bc:devices -- --sequencial` |
-| Gerar e abrir o relatório | `npm run report:bc` |
-| Guardar o relatório (arquivo único) | `npm run report:bc:arquivo` → `relatorios/<data_hora>/index.html`, que abre com dois cliques. As evidências de falha vão junto, se houver. `relatorios/` fica fora do git. |
+| Suíte completa no emulador | `npm run test:all` |
+| Suíte completa no celular | `npm run test:celular` |
+| Suíte do iOS | `npm run test:ios` |
+| Smoke | `npm run test:smoke` (outro aparelho: `DEVICE_PROFILE=celular npm run test:smoke`) |
+| Um spec só | `npm run test:all -- --spec tests/specs/android/form.spec.js` |
+| Suíte nos 3 aparelhos **em paralelo** | `npm run test:devices` |
+| Suíte nos 3 aparelhos, um por vez | `npm run test:devices -- --sequencial` |
+| Gerar e abrir o relatório | `npm run report` |
+| Guardar o relatório (arquivo único) | `npm run report:arquivo` → `relatorios/<data_hora>/index.html`, que abre com dois cliques. As evidências de falha vão junto, se houver. `relatorios/` fica fora do git. |
 
 Escolher aparelhos ou specs no script:
 
 ```bash
-DEVICES="emulador celular" npm run test:bc:devices
-npm run test:bc:devices -- --spec tests/specs/smoke.spec.js
-BC_AVD=Medium_Phone npm run test:bc:devices
+DEVICES="emulador celular" npm run test:devices
+npm run test:devices -- --spec tests/specs/smoke.spec.js
+AVD=Medium_Phone npm run test:devices
 ```
 
 ### O que o script de vários aparelhos faz
@@ -115,7 +115,7 @@ BC_AVD=Medium_Phone npm run test:bc:devices
 
 ## Relatório separado por aparelho
 
-`wdio.bc.conf.js` marca cada teste com o rótulo do aparelho: `"<Plataforma> · <perfil> (<id>)"`, por exemplo:
+`wdio.conf.js` marca cada teste com o rótulo do aparelho: `"<Plataforma> · <perfil> (<id>)"`, por exemplo:
 
 - `Android · emulador (emulator-5554)`
 - `Android · celular (RQ8R709VAVR)`
@@ -134,7 +134,7 @@ Não use `parentSuite` para isso: o `@wdio/allure-reporter` já preenche esse la
 |---|---|---|
 | Teste chama `evidenciar('nome')` | Screenshot nomeado, no momento da chamada | Allure |
 | Teste **não** chama `evidenciar()` | Um "Screenshot final" | Allure |
-| Teste **falha** | `.mp4` da gravação do teste + `.png` | `screenshots/bc/<slug-do-aparelho>/<titulo-do-teste>.*` |
+| Teste **falha** | `.mp4` da gravação do teste + `.png` | `screenshots/<slug-do-aparelho>/<titulo-do-teste>.*` |
 
 - O slug do aparelho (ex.: `android-celular-rq8r709vavr`) separa as pastas, para execuções em paralelo não sobrescreverem as evidências umas das outras.
 - `disableWebdriverStepsReporting` e `disableWebdriverScreenshotsReporting` estão ligados: sem isso, cada `takeScreenshot()` virava um anexo automático e duplicava as imagens.
@@ -153,7 +153,7 @@ A gravação usa `startRecordingScreen`. No iOS ela exige `ffmpeg` instalado (`b
 
 ## Aparelho físico
 
-- **Tela apagada ou bloqueada** faz o app não abrir a tempo (`~Home-screen still not displayed`). O script de vários aparelhos acorda a tela antes de rodar. Rodando `test:bc:celular` direto, deixe a tela ligada e desbloqueada. Bloqueio com senha ou PIN não é destravado automaticamente.
+- **Tela apagada ou bloqueada** faz o app não abrir a tempo (`~Home-screen still not displayed`). O script de vários aparelhos acorda a tela antes de rodar. Rodando `test:celular` direto, deixe a tela ligada e desbloqueada. Bloqueio com senha ou PIN não é destravado automaticamente.
 - **Tela pequena** (ex.: SM-A013M, 720x1480): elementos abaixo da área visível não existem para o UiAutomator2. Os page objects rolam até os botões do Forms (`rolarAte`), e a Webview usa só o logo do topo.
 - **Play Protect** pode recusar a instalação feita pelo `adb` (`INSTALL_FAILED_VERIFICATION_FAILURE`). Desative "Verificar apps com o Play Protect" e "Verificar apps por USB" enquanto testa.
 

@@ -39,7 +39,7 @@ function carregarEnv() {
  * Carrega o .env e resolve o aparelho do perfil DEVICE_PROFILE (padrão: emulador):
  * plataforma, portas e UDID (lido da variável do perfil, ex.: CELULAR_UDID).
  */
-function carregarEnvBc() {
+function carregarEnvDoPerfil() {
   const env = carregarEnv();
   const perfil = env.DEVICE_PROFILE || 'emulador';
   const regras = PERFIS[perfil];
@@ -88,4 +88,4 @@ function identificarDispositivo(env) {
   return { rotulo, slug };
 }
 
-module.exports = { carregarEnv, carregarEnvBc, identificarDispositivo, PERFIS };
+module.exports = { carregarEnv, carregarEnvDoPerfil, identificarDispositivo, PERFIS };

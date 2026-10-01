@@ -1,11 +1,11 @@
 // Smoke comum a Android e iOS: valida que o app abre e que a navegação básica funciona.
-// Roda em qualquer perfil: npm run test:bc:smoke | test:bc:smoke:celular | test:bc:smoke:ios
-import BcBasePage, { ANDROID_PACKAGE, ANDROID_ACTIVITY, IOS_BUNDLE_ID } from "../pageobjects/bc.base.page";
+// Roda em qualquer perfil: npm run test:smoke (outro aparelho: DEVICE_PROFILE=celular | simulador)
+import AppBasePage, { ANDROID_PACKAGE, ANDROID_ACTIVITY, IOS_BUNDLE_ID } from "../pageobjects/app.base.page";
 import LoginPage from "../pageobjects/login.page";
 import FormPage from "../pageobjects/form.page";
 import { evidenciar } from "../../config/video.hooks";
 
-const app = new BcBasePage();
+const app = new AppBasePage();
 
 describe("Smoke - app abre e navega", () => {
   beforeEach(async () => {

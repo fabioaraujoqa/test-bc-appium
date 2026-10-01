@@ -1,7 +1,7 @@
-import BcBasePage from './bc.base.page'
+import AppBasePage from './app.base.page'
 import Alert from './components/alert.component'
 
-class FormPage extends BcBasePage {
+class FormPage extends AppBasePage {
   constructor() { super('Forms') }
 
   // Seletores

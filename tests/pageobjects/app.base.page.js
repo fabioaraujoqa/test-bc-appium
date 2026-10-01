@@ -9,7 +9,7 @@ export const IOS_BUNDLE_ID = 'org.wdiodemoapp'
  * Cada tela informa o accessibility id do seu item no menu inferior (ex.: "Forms")
  * e pode definir `get tela()` com o container da tela, que o open() espera aparecer.
  */
-export default class BcBasePage extends PaginaBase {
+export default class AppBasePage extends PaginaBase {
   constructor(menu) {
     super()
     this.menu = menu
