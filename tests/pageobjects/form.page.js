@@ -1,5 +1,5 @@
 import BcBasePage from './bc.base.page'
-import Alert from '../components/alert.component'
+import Alert from './components/alert.component'
 
 class FormPage extends BcBasePage {
   constructor() { super('Forms') }

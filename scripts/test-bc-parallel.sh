@@ -1,13 +1,13 @@
 #!/bin/bash
 # Roda a suíte nos aparelhos dos perfis em DEVICES (padrão: emulador celular simulador),
-# EM PARALELO, cada um com seu próprio processo Appium (porta do .env.bc.<perfil>).
+# EM PARALELO, cada um com seu próprio processo Appium (portas em config/env.loader.js).
 # Um único Appium compartilhado por dois aparelhos derruba a instrumentação do
-# UiAutomator2 de um deles no meio da execução (ver docs/systems/operacao-bc.md).
+# UiAutomator2 de um deles no meio da execução (ver docs/systems/operacao-banco-carrefour.md).
 #
 # Uso:
 #   scripts/test-bc-parallel.sh                         # suíte completa, em paralelo
 #   scripts/test-bc-parallel.sh --sequencial            # um aparelho por vez
-#   scripts/test-bc-parallel.sh --spec tests/specs/bc/smoke.spec.js
+#   scripts/test-bc-parallel.sh --spec tests/specs/smoke.spec.js
 #   DEVICES="emulador celular" scripts/test-bc-parallel.sh
 #   BC_AVD=Medium_Phone scripts/test-bc-parallel.sh     # outro AVD para o emulador
 set -u
@@ -15,9 +15,15 @@ set -u
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$RAIZ"
 
+# Lê um valor já resolvido pelo loader (padrões do código + .env) para um perfil
+valor_do_perfil() {
+  DEVICE_PROFILE="$1" node -e "
+    try { console.log(require('./config/env.loader').carregarEnvBc(process.cwd())['$2'] || '') }
+    catch (erro) { console.error(erro.message); process.exit(1) }"
+}
+
 DEVICES="${DEVICES:-emulador celular simulador}"
-AVD_EMULADOR="${BC_AVD:-$(sed -n 's/^ANDROID_AVD=//p' .env.bc 2>/dev/null)}"
-AVD_EMULADOR="${AVD_EMULADOR:-Pixel_5}"
+AVD_EMULADOR="${BC_AVD:-$(valor_do_perfil emulador ANDROID_AVD)}"
 DIR_LOGS="$RAIZ/test-results/logs"
 
 SEQUENCIAL=0
@@ -37,8 +43,8 @@ titulo "1) Conferindo os aparelhos: ${DEVICES}"
 for perfil in $DEVICES; do
   case "$perfil" in
     celular|tablet)
-      UDID="$(sed -n 's/^ANDROID_UDID=//p' ".env.bc.${perfil}" 2>/dev/null)"
-      if [ -z "$UDID" ] || ! adb devices | grep -q "^${UDID}[[:space:]]\+device$"; then
+      UDID="$(valor_do_perfil "$perfil" ANDROID_UDID)" || exit 1
+      if ! adb devices | grep -q "^${UDID}[[:space:]]\+device$"; then
         echo "❌ ${perfil} (UDID '${UDID:-<vazio>}') não está em 'adb devices' como 'device'."
         echo "   Conecte o cabo USB e autorize a depuração, ou tire '${perfil}' de DEVICES."
         exit 1
@@ -65,7 +71,7 @@ for perfil in $DEVICES; do
       echo "✅ emulador pronto: ${SERIAL}"
       ;;
     simulador)
-      NOME="$(sed -n 's/^IOS_DEVICE_NAME=//p' .env.bc.simulador 2>/dev/null)"
+      NOME="$(valor_do_perfil simulador IOS_DEVICE_NAME)" || exit 1
       if ! xcrun simctl list devices available 2>/dev/null | grep -q "${NOME:-<vazio>} ("; then
         echo "❌ Simulador '${NOME:-<vazio>}' não existe. Veja: xcrun simctl list devices available"
         exit 1
@@ -90,11 +96,11 @@ for perfil in $DEVICES; do
   LOG="$DIR_LOGS/${perfil}.log"
   echo "▶ ${perfil}  (log: ${LOG})"
   if [ $SEQUENCIAL = 1 ]; then
-    DEVICE_PROFILE="$perfil" npx wdio run tests/config/wdio.bc.conf.js ${ARGS[@]+"${ARGS[@]}"} > "$LOG" 2>&1
+    DEVICE_PROFILE="$perfil" npx wdio run config/wdio.bc.conf.js ${ARGS[@]+"${ARGS[@]}"} > "$LOG" 2>&1
     if [ $? -ne 0 ]; then STATUS=1; echo "❌ ${perfil}"; else echo "✅ ${perfil}"; fi
     grep -E "PASSED in|FAILED in|Spec Files" "$LOG" || tail -n 20 "$LOG"
   else
-    DEVICE_PROFILE="$perfil" npx wdio run tests/config/wdio.bc.conf.js ${ARGS[@]+"${ARGS[@]}"} > "$LOG" 2>&1 &
+    DEVICE_PROFILE="$perfil" npx wdio run config/wdio.bc.conf.js ${ARGS[@]+"${ARGS[@]}"} > "$LOG" 2>&1 &
     PIDS+=($!)
     PERFIS_PIDS+=("$perfil")
   fi

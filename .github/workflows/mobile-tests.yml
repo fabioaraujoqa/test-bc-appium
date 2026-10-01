@@ -1,0 +1,288 @@
+name: Testes mobile (Appium) + Allure
+
+# Push e PR: smoke no emulador Android do GitHub (não gasta minutos do BrowserStack).
+# Manual (Actions > Run workflow): escolhe onde rodar e qual suíte.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      alvo:
+        description: 'Onde rodar'
+        type: choice
+        default: emulador
+        options: [ emulador, browserstack, ambos ]
+      suite:
+        description: 'Suíte'
+        type: choice
+        default: smoke
+        options: [ smoke, completa, login, form, drag, swipe, menu, data, permissions, webview ]
+
+permissions:
+  contents: read
+  pull-requests: write
+  pages: write
+  id-token: write
+
+# Um novo push na mesma branch cancela a execução anterior
+concurrency:
+  group: mobile-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ALVO: ${{ inputs.alvo || 'emulador' }}
+  SUITE: ${{ inputs.suite || 'smoke' }}
+  APK_URL: https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
+  APPIUM_VERSION: 3.2.0
+
+jobs:
+  emulador:
+    name: Android emulador
+    if: ${{ (inputs.alvo || 'emulador') != 'browserstack' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Clonar repositório
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Definir specs da suíte
+        run: |
+          case "$SUITE" in
+            smoke)    echo "SPEC_ARGS=--spec tests/specs/smoke.spec.js" >> "$GITHUB_ENV" ;;
+            completa) echo "SPEC_ARGS=" >> "$GITHUB_ENV" ;;
+            *)        echo "SPEC_ARGS=--spec tests/specs/android/${SUITE}.spec.js" >> "$GITHUB_ENV" ;;
+          esac
+          echo "Emulador Android — suíte: **$SUITE**" >> "$GITHUB_STEP_SUMMARY"
+
+      # O app/ fica fora do git: baixa o APK oficial da release do app de demonstração
+      - name: Cache do APK
+        id: cache-apk
+        uses: actions/cache@v6
+        with:
+          path: app/android-app-wdio.apk
+          key: apk-${{ env.APK_URL }}
+
+      - name: Baixar APK
+        if: steps.cache-apk.outputs.cache-hit != 'true'
+        run: mkdir -p app && curl -fsSL "$APK_URL" -o app/android-app-wdio.apk
+
+      - name: Cache do Appium
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.appium
+            ~/.npm-global
+          key: appium-${{ env.APPIUM_VERSION }}-uiautomator2
+
+      # A config usa o Appium global (comando "appium"), igual na máquina local
+      - name: Instalar Appium e UiAutomator2
+        run: |
+          npm config set prefix ~/.npm-global
+          echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.npm-global/bin:$PATH"
+          appium --version 2>/dev/null | grep -q "$APPIUM_VERSION" || npm install -g "appium@$APPIUM_VERSION"
+          appium driver list --installed 2>&1 | grep -q uiautomator2 || appium driver install uiautomator2
+
+      - name: Habilitar KVM (aceleração do emulador)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Cache do AVD
+        id: cache-avd
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-30-google_apis-x86_64-pixel_5
+
+      - name: Criar snapshot do AVD
+        if: steps.cache-avd.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2.38.0
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_5
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "AVD criado e em cache"
+
+      # Perfil "emulador" do projeto: o emulador do CI sobe como emulator-5554
+      - name: Rodar testes no emulador
+        uses: reactivecircus/android-emulator-runner@v2.38.0
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_5
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: npm run allure:reset && npx wdio run config/wdio.bc.conf.js $SPEC_ARGS
+
+      # Os passos abaixo rodam mesmo com teste falhando, para o relatório sair
+      - name: Guardar resultados do Allure
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-results-emulador
+          path: allure-results
+          retention-days: 7
+
+      - name: Guardar evidências de falha e logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: evidencias-emulador
+          path: |
+            screenshots
+            test-results
+          retention-days: 7
+
+  browserstack:
+    name: BrowserStack (aparelho real)
+    if: ${{ inputs.alvo == 'browserstack' || inputs.alvo == 'ambos' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Clonar repositório
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Definir specs da suíte
+        run: |
+          case "$SUITE" in
+            smoke)    echo "SPEC_ARGS=--spec tests/specs/smoke.spec.js" >> "$GITHUB_ENV" ;;
+            completa) echo "SPEC_ARGS=" >> "$GITHUB_ENV" ;;
+            *)        echo "SPEC_ARGS=--spec tests/specs/android/${SUITE}.spec.js" >> "$GITHUB_ENV" ;;
+          esac
+          echo "BrowserStack — suíte: **$SUITE**" >> "$GITHUB_STEP_SUMMARY"
+
+      # O app já está no BrowserStack (upload feito uma vez); aqui vai só o id
+      - name: Rodar testes no BrowserStack
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+          BROWSERSTACK_APP_ID: ${{ secrets.BROWSERSTACK_APP_ID }}
+        run: |
+          # SPEC_ARGS é "--spec <arquivo>" (ou vazio): precisa ser dividido em palavras
+          # shellcheck disable=SC2086
+          npm run allure:reset && npx wdio run config/wdio.browserstack.conf.js $SPEC_ARGS
+
+      - name: Guardar resultados do Allure
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-results-browserstack
+          path: allure-results
+          retention-days: 7
+
+  relatorio:
+    name: Relatório Allure
+    needs: [ emulador, browserstack ]
+    # Roda se pelo menos um dos jobs de teste rodou (passando ou não)
+    if: ${{ !cancelled() && (needs.emulador.result != 'skipped' || needs.browserstack.result != 'skipped') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar repositório
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # Junta os resultados de todos os alvos: o relatório separa por aparelho (labels host/suite)
+      - name: Baixar resultados
+        uses: actions/download-artifact@v8
+        with:
+          pattern: allure-results-*
+          path: allure-results
+          merge-multiple: true
+
+      # Traz o histórico do relatório publicado, para o gráfico de tendência
+      - name: Recuperar histórico do relatório anterior
+        env:
+          PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+        run: |
+          mkdir -p allure-results/history
+          for arquivo in history.json history-trend.json duration-trend.json categories-trend.json retry-trend.json; do
+            curl -fsSL "$PAGES_URL/history/$arquivo" -o "allure-results/history/$arquivo" || rm -f "allure-results/history/$arquivo"
+          done
+
+      - name: Gerar relatório Allure
+        run: npm run report:bc:generate
+
+      - name: Resumo da execução
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          d = json.load(open('allure-report/widgets/summary.json'))['statistic']
+          print(f"### Resultado: {d['passed']} passaram, {d['failed']} falharam, {d['broken']} quebrados, {d['skipped']} pulados (total {d['total']})")
+          EOF
+
+      - name: Guardar relatório (download)
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-report
+          path: allure-report
+          retention-days: 14
+
+      - name: Empacotar relatório para o GitHub Pages
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: allure-report
+
+      - name: Comentar PR com link do relatório
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Testes mobile — alvo: **${process.env.ALVO}**, suíte: **${process.env.SUITE}**\n\nRelatório Allure: baixe o artefato **allure-report** em [execução #${context.runNumber}](${run}).`,
+            });
+
+  publicar:
+    name: Publicar no GitHub Pages
+    needs: relatorio
+    if: ${{ !cancelled() && needs.relatorio.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar relatório
+        id: deployment
+        uses: actions/deploy-pages@v5

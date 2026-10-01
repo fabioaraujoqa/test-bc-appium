@@ -1,4 +1,4 @@
-import DragPage from "../../../pageobjects/bc/drag.page";
+import DragPage from "../../pageobjects/drag.page";
 //Referencia: https://webdriver.io/docs/api/mobile/dragAndDrop/
 describe("Testes na tela DragDrop", () => {
   beforeEach(async () => {

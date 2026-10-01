@@ -6,7 +6,7 @@
       "args": ["-y", "appium-mcp@1.95.1"],
       "env": {
         "ANDROID_HOME": "${ANDROID_HOME}",
-        "CAPABILITIES_CONFIG": "./tests/config/appium-mcp.capabilities.json",
+        "CAPABILITIES_CONFIG": "./config/appium-mcp.capabilities.json",
         "SCREENSHOTS_DIR": "./mcp-screenshots"
       }
     }

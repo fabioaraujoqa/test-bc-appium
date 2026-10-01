@@ -157,9 +157,5 @@ app/*.ipa
 # Evidências e resultados
 screenshots/
 test-results/
-# Perfis de dispositivo: só o modelo é versionado
-.env.bc
-.env.bc.*
-!.env.bc.example
 # Relatórios salvos com npm run report:bc:arquivo
 relatorios/

@@ -1,5 +1,5 @@
-import MenuPage from "../../../pageobjects/bc/menu.page";
-import FormPage from "../../../pageobjects/bc/form.page";
+import MenuPage from "../../pageobjects/menu.page";
+import FormPage from "../../pageobjects/form.page";
 
 describe("Menu lateral", () => {
   afterEach(async () => {

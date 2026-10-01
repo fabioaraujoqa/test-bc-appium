@@ -1,4 +1,4 @@
-import WebviewPage from "../../../pageobjects/bc/webview.page";
+import WebviewPage from "../../pageobjects/webview.page";
 
 // O site carregado é o webdriver.io ao vivo; os testes checam só o que é estável
 describe("Webview", () => {

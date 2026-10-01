@@ -1,4 +1,4 @@
-import PermissionsPage from "../../../pageobjects/bc/permissions.page";
+import PermissionsPage from "../../pageobjects/permissions.page";
 
 describe("Permissions", () => {
   beforeEach(async () => {

@@ -7,41 +7,50 @@ Stack: WebdriverIO 9 + Appium 3 (UiAutomator2 / XCUITest) + Mocha + Allure.
 ## Estrutura
 
 ```
+config/
+├── wdio.bc.conf.js            aparelhos locais: monta as capabilities pelo perfil
+├── wdio.browserstack.conf.js  BrowserStack (Android ou iOS)
+├── env.loader.js              lê o .env e as regras de cada perfil (PERFIS)
+├── video.hooks.js             evidenciar(), screenshot final, vídeo de falha
+└── appium-mcp.capabilities.json   usado só pelo MCP (.mcp.json)
 tests/
-├── config/
-│   ├── wdio.bc.conf.js      config única: monta as capabilities pelo perfil
-│   ├── env.loader.js        carrega .env.bc + overlay do perfil
-│   └── video.hooks.js       evidenciar(), screenshot final, vídeo de falha
-├── pageobjects/
-│   ├── base.page.js         PaginaBase genérica (clicar, definirValor, ...)
-│   └── bc/                  base do app (bc.base.page.js) + uma page por tela
-├── specs/bc/
-│   ├── smoke.spec.js        comum a Android e iOS
-│   ├── android/             roda nos perfis Android
-│   └── ios/                 roda no perfil simulador
+├── pageobjects/               base.page.js (genérica), bc.base.page.js (do app) e uma page por tela
+├── specs/
+│   ├── smoke.spec.js          comum a Android e iOS
+│   ├── android/               roda nos perfis Android
+│   └── ios/                   roda no perfil simulador
 └── utils/
-scripts/test-bc-parallel.sh  vários aparelhos, em paralelo ou em sequência
-app/                         android-app-wdio.apk e ios-app-wdio.app (fora do git)
+scripts/test-bc-parallel.sh    vários aparelhos, em paralelo ou em sequência
+app/                           android-app-wdio.apk e ios-app-wdio.app (fora do git)
 ```
+
+## Configuração: `.env` único
+
+| Arquivo | Versionado? | Conteúdo |
+|---|---|---|
+| `.env` | **Não** | Só o que é **segredo** (BrowserStack) ou **desta máquina** (UDIDs, AVD, simulador) |
+| `.env.example` | Sim | As mesmas chaves, vazias e comentadas. Copie para `.env` numa máquina nova. |
+| `config/env.loader.js` (`PERFIS`) | Sim | Regras fixas de cada perfil: plataforma e portas |
+
+Regras do loader:
+
+- Lê o `.env` sem executar nada no shell. **Variáveis do terminal têm precedência** sobre o `.env`.
+- Chave vazia no `.env` é ignorada e vale o padrão do código (`Pixel_5`, `emulator-5554`, `iPhone 16`/`18.5`).
+- Perfil físico (`celular`, `tablet`) sem UDID, ou com UDID de emulador, **falha logo** dizendo qual chave preencher.
+- Perfil `emulador` com UDID que não começa com `emulator-` só gera um **aviso** no console.
 
 ## Perfis de dispositivo
 
-O aparelho é escolhido pela variável `DEVICE_PROFILE`. O `.env.bc` é o perfil padrão (emulador); os outros perfis carregam um overlay `.env.bc.<perfil>` **por cima**, só com o que muda.
+O aparelho é escolhido pela variável `DEVICE_PROFILE` (padrão: `emulador`).
 
-| Perfil | Plataforma | Arquivo | Appium | Porta exclusiva |
+| Perfil | Plataforma | Chave do `.env` | Appium | Porta exclusiva |
 |---|---|---|---|---|
-| `emulador` (padrão) | Android | `.env.bc` | 4723 | `SYSTEM_PORT=8200` |
-| `celular` | Android | `.env.bc.celular` | 4724 | `SYSTEM_PORT=8201` |
-| `tablet` | Android | `.env.bc.tablet` (criar se precisar) | escolher | escolher |
-| `simulador` | iOS | `.env.bc.simulador` | 4725 | `WDA_LOCAL_PORT=8100` |
+| `emulador` (padrão) | Android | `EMULADOR_UDID` (padrão `emulator-5554`), `ANDROID_AVD` | 4723 | systemPort 8200 |
+| `celular` | Android | `CELULAR_UDID` | 4724 | systemPort 8201 |
+| `tablet` | Android | `TABLET_UDID` | 4726 | systemPort 8202 |
+| `simulador` | iOS | `IOS_DEVICE_NAME`, `IOS_PLATFORM_VERSION`, `IOS_UDID` (opcional) | 4725 | wdaLocalPort 8100 |
 
-Regras do loader (`tests/config/env.loader.js`):
-
-- Lê os arquivos sem executar nada no shell. **`process.env` tem precedência** sobre os arquivos.
-- Chave vazia no overlay **não apaga** o valor do `.env.bc`.
-- Perfil físico (`celular`, `tablet`) sem `ANDROID_UDID`, ou com UDID de emulador, **falha logo** com mensagem explicando o que preencher.
-- Perfil `emulador` com UDID que não começa com `emulator-` só gera um **aviso** no console.
-- Todas as chaves, sem valores, estão em `.env.bc.example`. Os `.env.bc*` reais ficam fora do git.
+Para rodar com outro aparelho sem editar o `.env`: `CELULAR_UDID=XXXX npm run test:bc:celular`.
 
 ### Por que `deviceName` **e** `udid`
 
@@ -68,7 +77,7 @@ Escolher aparelhos ou specs no script:
 
 ```bash
 DEVICES="emulador celular" npm run test:bc:devices:parallel
-./scripts/test-bc-parallel.sh --spec tests/specs/bc/smoke.spec.js
+./scripts/test-bc-parallel.sh --spec tests/specs/smoke.spec.js
 BC_AVD=Medium_Phone npm run test:bc:devices:parallel
 ```
 
@@ -129,7 +138,7 @@ A gravação usa `startRecordingScreen`. No iOS ela exige `ffmpeg` instalado (`b
 
 ## `noReset` e versão do app
 
-A config usa `appium:noReset: true`: **se o app já estiver instalado, o Appium não reinstala**, mesmo trocando o arquivo em `app/`. O estado entre testes é limpo por `reiniciarNaTelaInicial()` (fecha e reabre o app).
+A config local usa `appium:noReset: true`: **se o app já estiver instalado, o Appium não reinstala**, mesmo trocando o arquivo em `app/`. O estado entre testes é limpo por `reiniciarNaTelaInicial()` (fecha e reabre o app).
 
 Depois de trocar o app em `app/`, desinstale dos aparelhos:
 
@@ -146,5 +155,31 @@ adb -s <udid> shell dumpsys package com.wdiodemoapp | grep versionName
 
 ## iOS
 
-- A primeira sessão compila o WebDriverAgent e pode levar alguns minutos (`CONNECTION_RETRY_TIMEOUT=600000` no `.env.bc.simulador`). Avisos de `xcodebuild exited with code 65` nessa primeira tentativa são normais: o WebdriverIO tenta de novo.
+- A primeira sessão compila o WebDriverAgent e pode levar alguns minutos (o `connectionRetryTimeout` do iOS já é de 10 minutos). Avisos de `xcodebuild exited with code 65` nessa primeira tentativa são normais: o WebdriverIO tenta de novo.
 - A cobertura de iOS é mínima de propósito (smoke + login + forms). Os page objects já tratam as diferenças do iOS (teclado, alertas, dropdown, menu). Veja a seção iOS do mapeamento.
+
+## BrowserStack
+
+Config: `config/wdio.browserstack.conf.js`. Credenciais e app id vêm do `.env` (ou dos secrets do GitHub Actions no CI).
+
+| Objetivo | Comando |
+|---|---|
+| Smoke Android | `npm run bs-android:smoke` |
+| Suíte Android (smoke + `specs/android`) | `npm run bs-android` |
+| iOS | `npm run bs-ios` (precisa de `.ipa` de aparelho real em `BROWSERSTACK_APP_ID_IOS`; o `.app` de simulador não roda lá) |
+
+1. **Credenciais:** App Automate → *Access Key* → `BROWSERSTACK_USERNAME` e `BROWSERSTACK_ACCESS_KEY` no `.env`.
+2. **Upload do app** (o `app_url` `bs://...` vai em `BROWSERSTACK_APP_ID`):
+   ```bash
+   curl -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
+     -X POST "https://api-cloud.browserstack.com/app-automate/upload" \
+     -F "file=@app/android-app-wdio.apk" -F "custom_id=wdio-demo-android"
+   ```
+3. **Aparelho:** padrão Google Pixel 6 / Android 12 (iOS: iPhone 15 / 17). Troque com `BS_DEVICE` e `BS_OS_VERSION`.
+4. **Relatório:** os testes recebem o rótulo `Android · browserstack (Google Pixel 6)` e entram no mesmo Allure dos aparelhos locais. O vídeo de cada sessão fica no painel do BrowserStack (o link do build aparece no fim do log).
+
+**Versão do Appium:** o padrão do BrowserStack é **Appium 1.22**, que não tem comandos que o WebdriverIO 9 usa (ex.: `getCurrentActivity`, erro `Unknown mobile command`). A config fixa `appiumVersion: 3.2.0` em `bstack:options`, a mesma versão do Appium local. Troque com `BS_APPIUM_VERSION`.
+
+**Gravação de tela:** `startRecordingScreen` não é suportado no BrowserStack, então a config não grava. Em falha, salva só o `.png` (o vídeo está no painel).
+
+**Trial:** a conta de teste tem limite de minutos e de execuções em paralelo. Valide com o smoke antes de rodar a suíte inteira.

@@ -1,4 +1,4 @@
-import PaginaBase from '../base.page'
+import PaginaBase from './base.page'
 
 export const ANDROID_PACKAGE = 'com.wdiodemoapp'
 export const ANDROID_ACTIVITY = '.MainActivity'

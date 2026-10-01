@@ -1,7 +1,8 @@
 // Executar:  npm run test:bc            (Android emulador, perfil padrão)
-//            npm run test:bc:celular    (Android físico, .env.bc.celular)
-//            npm run test:bc:ios        (iOS simulador, .env.bc.simulador)
-// Perfil:    DEVICE_PROFILE=emulador | celular | tablet | simulador  (ver docs/systems/operacao-bc.md)
+//            npm run test:bc:celular    (Android físico: CELULAR_UDID no .env)
+//            npm run test:bc:ios        (iOS simulador: IOS_DEVICE_NAME/VERSION no .env)
+// Perfil:    DEVICE_PROFILE=emulador | celular | tablet | simulador
+// Portas e regras de cada perfil: config/env.loader.js (PERFIS). Valores da máquina: .env (ver .env.example)
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
@@ -9,7 +10,7 @@ const allureReporter = require('@wdio/allure-reporter').default;
 const { carregarEnvBc, identificarDispositivo } = require('./env.loader');
 const { criarHooksDeEvidencias, deveTirarScreenshotFinal } = require('./video.hooks');
 
-const raizProjeto = path.resolve(__dirname, '../..');
+const raizProjeto = path.resolve(__dirname, '..');
 const env = carregarEnvBc(raizProjeto);
 const ehIos = env.PLATFORM === 'ios';
 const { rotulo: identificadorDispositivo, slug: slugDispositivo } = identificarDispositivo(env);
@@ -17,7 +18,7 @@ const { rotulo: identificadorDispositivo, slug: slugDispositivo } = identificarD
 const ANDROID_PACKAGE = 'com.wdiodemoapp';
 const IOS_BUNDLE_ID = 'org.wdiodemoapp';
 const caminhoApp = path.join(raizProjeto, ehIos ? 'app/ios-app-wdio.app' : 'app/android-app-wdio.apk');
-const dirSpecs = path.join(raizProjeto, 'tests/specs/bc');
+const dirSpecs = path.join(raizProjeto, 'tests/specs');
 
 // Subpasta por dispositivo: execuções em paralelo não sobrescrevem as evidências umas das outras
 const evidencias = criarHooksDeEvidencias(
@@ -133,7 +134,7 @@ exports.config = {
   },
 
   async before() {
-    const BcBasePage = require('../pageobjects/bc/bc.base.page').default;
+    const BcBasePage = require('../tests/pageobjects/bc.base.page').default;
     await new BcBasePage().reiniciarNaTelaInicial();
   },
 

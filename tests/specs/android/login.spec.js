@@ -1,5 +1,5 @@
-import LoginPage from "../../../pageobjects/bc/login.page";
-import Alert from "../../../pageobjects/bc/components/alert.component";
+import LoginPage from "../../pageobjects/login.page";
+import Alert from "../../pageobjects/components/alert.component";
 
 describe("Login / Sign up", () => {
   beforeEach(async () => {

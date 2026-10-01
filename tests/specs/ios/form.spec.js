@@ -1,4 +1,4 @@
-import FormPage from "../../../pageobjects/bc/form.page";
+import FormPage from "../../pageobjects/form.page";
 
 describe("iOS - Forms", () => {
   beforeEach(async () => {

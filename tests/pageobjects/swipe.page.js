@@ -1,5 +1,5 @@
 import BcBasePage from './bc.base.page'
-import { swipeNTimes } from '../../utils/swipe'
+import { swipeNTimes } from '../utils/swipe'
 
 class SwipePage extends BcBasePage {
   constructor() { super('Swipe') }

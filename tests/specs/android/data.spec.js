@@ -1,4 +1,4 @@
-import DataPage from "../../../pageobjects/bc/data.page";
+import DataPage from "../../pageobjects/data.page";
 
 describe("Data management - memória", () => {
   beforeEach(async () => {

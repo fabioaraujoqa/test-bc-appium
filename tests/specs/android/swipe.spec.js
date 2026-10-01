@@ -1,4 +1,4 @@
-import SwipePage from "../../../pageobjects/bc/swipe.page";
+import SwipePage from "../../pageobjects/swipe.page";
 
 describe("Swipe - Arrastar na tela", () => {
   beforeEach(async () => {
