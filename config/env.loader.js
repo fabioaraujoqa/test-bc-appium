@@ -1,5 +1,8 @@
-const fs = require('node:fs');
 const path = require('node:path');
+
+// Carrega o .env da raiz em process.env. Por padrão o dotenv NÃO sobrescreve o que já existe,
+// então variáveis do terminal e dos secrets do CI têm precedência sobre o arquivo.
+require('dotenv').config({ path: path.resolve(__dirname, '..', '.env'), quiet: true });
 
 /**
  * Regras fixas de cada perfil de dispositivo (versionadas aqui, não no .env).
@@ -21,44 +24,11 @@ const PADROES = {
 };
 
 /**
- * Carrega um arquivo no formato dotenv sem executar seu conteúdo no shell.
+ * Padrões do código + process.env (já com o .env). Chave vazia no .env não apaga o padrão.
+ * Serve para qualquer config, inclusive a do BrowserStack.
  */
-function lerArquivoEnv(caminhoArquivo) {
-  if (!fs.existsSync(caminhoArquivo)) return {};
-
-  const variaveis = {};
-  for (const linhaOriginal of fs.readFileSync(caminhoArquivo, 'utf8').split(/\r?\n/)) {
-    const linha = linhaOriginal.trim();
-    if (!linha || linha.startsWith('#')) continue;
-
-    const separador = linha.indexOf('=');
-    if (separador <= 0) continue;
-
-    const chave = linha.slice(0, separador).trim();
-    let valor = linha.slice(separador + 1).trim();
-
-    const aspas = valor[0];
-    if ((aspas === '"' || aspas === "'") && valor.endsWith(aspas)) {
-      valor = valor.slice(1, -1);
-    } else {
-      // comentário no fim da linha: CHAVE=valor   # explicação
-      valor = valor.replace(/\s+#.*$/, '');
-    }
-
-    variaveis[chave] = valor;
-  }
-  return variaveis;
-}
-
-/**
- * Lê o .env da raiz (chaves vazias são ignoradas) com process.env por cima.
- * Serve para qualquer config, inclusive as do BrowserStack.
- */
-function carregarEnv(raizProjeto) {
+function carregarEnv() {
   const env = { ...PADROES };
-  for (const [chave, valor] of Object.entries(lerArquivoEnv(path.join(raizProjeto, '.env')))) {
-    if (valor) env[chave] = valor;
-  }
   for (const [chave, valor] of Object.entries(process.env)) {
     if (valor) env[chave] = valor;
   }
@@ -69,8 +39,8 @@ function carregarEnv(raizProjeto) {
  * Carrega o .env e resolve o aparelho do perfil DEVICE_PROFILE (padrão: emulador):
  * plataforma, portas e UDID (lido da variável do perfil, ex.: CELULAR_UDID).
  */
-function carregarEnvBc(raizProjeto) {
-  const env = carregarEnv(raizProjeto);
+function carregarEnvBc() {
+  const env = carregarEnv();
   const perfil = env.DEVICE_PROFILE || 'emulador';
   const regras = PERFIS[perfil];
 
@@ -118,4 +88,4 @@ function identificarDispositivo(env) {
   return { rotulo, slug };
 }
 
-module.exports = { lerArquivoEnv, carregarEnv, carregarEnvBc, identificarDispositivo, PERFIS };
+module.exports = { carregarEnv, carregarEnvBc, identificarDispositivo, PERFIS };

@@ -7,7 +7,7 @@ const { carregarEnv } = require('./env.loader');
 const { criarHooksDeEvidencias, deveTirarScreenshotFinal } = require('./video.hooks');
 
 const raizProjeto = path.resolve(__dirname, '..');
-const env = carregarEnv(raizProjeto);
+const env = carregarEnv();
 const ehIos = (env.BS_PLATFORM || 'android') === 'ios';
 
 const appId = ehIos ? env.BROWSERSTACK_APP_ID_IOS : env.BROWSERSTACK_APP_ID;

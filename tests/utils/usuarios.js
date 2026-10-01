@@ -1,14 +1,10 @@
-import path from 'node:path'
-import { carregarEnv } from '../../config/env.loader'
 import fixture from '../fixtures/usuarios.json'
 
-const env = carregarEnv(path.resolve(__dirname, '../..'))
-
 /**
- * Usuário de login: credencial, vem do .env (local) ou dos secrets do GitHub (CI).
+ * Usuário de login: credencial, vem do .env (carregado pelo dotenv na config) ou dos secrets do CI.
  */
 export function usuarioLogin() {
-  const { LOGIN_EMAIL: email, LOGIN_SENHA: senha } = env
+  const { LOGIN_EMAIL: email, LOGIN_SENHA: senha } = process.env
   if (!email || !senha) {
     throw new Error('LOGIN_EMAIL e LOGIN_SENHA não definidos. Preencha o .env (veja .env.example) ou os secrets do CI.')
   }

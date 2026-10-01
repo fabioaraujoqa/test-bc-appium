@@ -18,7 +18,7 @@ on:
         description: 'Suíte'
         type: choice
         default: smoke
-        options: [ smoke, completa, login, form, drag, swipe, menu, data, permissions, webview ]
+        options: [ smoke, completa, login, form, drag, menu, permissions ]
 
 permissions:
   contents: read

@@ -18,7 +18,7 @@ cd "$RAIZ"
 # Lê um valor já resolvido pelo loader (padrões do código + .env) para um perfil
 valor_do_perfil() {
   DEVICE_PROFILE="$1" node -e "
-    try { console.log(require('./config/env.loader').carregarEnvBc(process.cwd())['$2'] || '') }
+    try { console.log(require('./config/env.loader').carregarEnvBc()['$2'] || '') }
     catch (erro) { console.error(erro.message); process.exit(1) }"
 }
 
@@ -124,6 +124,6 @@ if [ $SEQUENCIAL = 0 ]; then
 fi
 
 titulo "3) Gerando relatório Allure combinado"
-npm run report:bc:generate > /dev/null && echo "✅ allure-report/ (abra com: npm run report:bc:open)"
+npm run report:bc:generate > /dev/null && echo "✅ allure-report/ (abra com: npm run report:bc)"
 
 exit $STATUS

@@ -17,10 +17,9 @@ class DragPage extends BcBasePage {
   // Métodos
   async arrastar(posicao) {
     await this.peca(posicao).dragAndDrop(await this.alvo(posicao))
-    await browser.pause(300) // espera a animação de encaixe
+    await browser.pause(300)
   }
 
-  // As peças aparecem embaralhadas, mas cada uma tem o id da sua posição final
   async montarQuebraCabeca() {
     for (const posicao of POSICOES) {
       await this.arrastar(posicao)

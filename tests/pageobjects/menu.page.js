@@ -6,7 +6,6 @@ class MenuPage extends BcBasePage {
 
   get tela() { return $('~tab-side-menu-panel') }
 
-  // Telas do menu: home, webview, login, forms, swipe, drag, permissions, data-management
   item(tela)     { return $(`~side-menu-item-${tela}`) }
   estrela(tela)  { return $(`~side-menu-star-${tela}`) }
 

@@ -10,7 +10,7 @@ Stack: WebdriverIO 9 + Appium 3 (UiAutomator2 / XCUITest) + Mocha + Allure.
 config/
 ├── wdio.bc.conf.js            aparelhos locais: monta as capabilities pelo perfil
 ├── wdio.browserstack.conf.js  BrowserStack (Android ou iOS)
-├── env.loader.js              lê o .env e as regras de cada perfil (PERFIS)
+├── env.loader.js              carrega o .env (dotenv) e as regras de cada perfil (PERFIS)
 ├── video.hooks.js             evidenciar(), screenshot final, vídeo de falha
 └── appium-mcp.capabilities.json   usado só pelo MCP (.mcp.json)
 tests/
@@ -20,7 +20,7 @@ tests/
 │   ├── smoke.spec.js          comum a Android e iOS
 │   ├── android/               roda nos perfis Android
 │   └── ios/                   roda no perfil simulador
-└── utils/                     usuarios.js (lê .env + fixture), swipe.js
+└── utils/usuarios.js          lê .env + fixture
 scripts/test-bc-parallel.sh    vários aparelhos, em paralelo ou em sequência
 app/                           android-app-wdio.apk e ios-app-wdio.app (fora do git)
 ```
@@ -35,7 +35,7 @@ app/                           android-app-wdio.apk e ios-app-wdio.app (fora do 
 
 Regras do loader:
 
-- Lê o `.env` sem executar nada no shell. **Variáveis do terminal têm precedência** sobre o `.env`.
+- O `.env` é carregado pelo `dotenv`, que **não sobrescreve** o que já existe: variáveis do terminal e dos secrets do CI têm precedência.
 - Chave vazia no `.env` é ignorada e vale o padrão do código (`Pixel_5`, `emulator-5554`, `iPhone 16`/`18.5`).
 - Perfil físico (`celular`, `tablet`) sem UDID, ou com UDID de emulador, **falha logo** dizendo qual chave preencher.
 - Perfil `emulador` com UDID que não começa com `emulator-` só gera um **aviso** no console.
@@ -87,20 +87,19 @@ No perfil `emulador`, se o `emulator-5554` não estiver rodando, a config troca 
 | Suíte completa no emulador | `npm run test:bc` |
 | Suíte completa no celular | `npm run test:bc:celular` |
 | Suíte do iOS | `npm run test:bc:ios` |
-| Smoke (emulador / celular / iOS) | `npm run test:bc:smoke` / `test:bc:smoke:celular` / `test:bc:smoke:ios` |
-| Smoke nos 3 aparelhos, um por vez | `npm run test:bc:smoke:devices` |
-| Suíte nos 3 aparelhos, um por vez | `npm run test:bc:devices` |
-| Suíte nos 3 aparelhos **em paralelo** | `npm run test:bc:devices:parallel` |
-| Gerar / abrir relatório | `npm run report:bc:generate` / `report:bc:open` / `report:bc` |
-| Rodar e já abrir o relatório | qualquer comando acima + `:report` (ex.: `test:bc:smoke:report`) |
+| Smoke | `npm run test:bc:smoke` (outro aparelho: `DEVICE_PROFILE=celular npm run test:bc:smoke`) |
+| Um spec só | `npm run test:bc -- --spec tests/specs/android/form.spec.js` |
+| Suíte nos 3 aparelhos **em paralelo** | `npm run test:bc:devices` |
+| Suíte nos 3 aparelhos, um por vez | `npm run test:bc:devices -- --sequencial` |
+| Gerar e abrir o relatório | `npm run report:bc` |
 | Guardar o relatório (arquivo único) | `npm run report:bc:arquivo` → `relatorios/<data_hora>/index.html`, que abre com dois cliques. As evidências de falha vão junto, se houver. `relatorios/` fica fora do git. |
 
 Escolher aparelhos ou specs no script:
 
 ```bash
-DEVICES="emulador celular" npm run test:bc:devices:parallel
-./scripts/test-bc-parallel.sh --spec tests/specs/smoke.spec.js
-BC_AVD=Medium_Phone npm run test:bc:devices:parallel
+DEVICES="emulador celular" npm run test:bc:devices
+npm run test:bc:devices -- --spec tests/specs/smoke.spec.js
+BC_AVD=Medium_Phone npm run test:bc:devices
 ```
 
 ### O que o script de vários aparelhos faz
@@ -186,9 +185,9 @@ Config: `config/wdio.browserstack.conf.js`. Credenciais e app id vêm do `.env` 
 
 | Objetivo | Comando |
 |---|---|
-| Smoke Android | `npm run bs-android:smoke` |
 | Suíte Android (smoke + `specs/android`) | `npm run bs-android` |
-| iOS | `npm run bs-ios` (precisa de `.ipa` de aparelho real em `BROWSERSTACK_APP_ID_IOS`; o `.app` de simulador não roda lá) |
+| Smoke Android | `npm run bs-android -- --spec tests/specs/smoke.spec.js` |
+| iOS | `BS_PLATFORM=ios npm run bs-android` (precisa de `.ipa` de aparelho real em `BROWSERSTACK_APP_ID_IOS`; o `.app` de simulador não roda lá) |
 
 1. **Credenciais:** App Automate → *Access Key* → `BROWSERSTACK_USERNAME` e `BROWSERSTACK_ACCESS_KEY` no `.env`.
 2. **Upload do app** (o `app_url` `bs://...` vai em `BROWSERSTACK_APP_ID`):

@@ -8,8 +8,8 @@ class FormPage extends BcBasePage {
   get tela()         { return $('~Forms-screen') }
   get input ()        { return $('~text-input') }
   get inputResult ()  { return $('~input-text-result') }
-  get switch ()       { return $('~switch') }
-  get swithText ()    { return $('~switch-text') }
+  get switchElement ()       { return $('~switch') }
+  get switchText ()    { return $('~switch-text') }
   get dropDown ()     { return $('~Dropdown') }
   get textDropDown () { return $(driver.isAndroid ? 'android=new UiSelector().resourceId("text_input")' : '~text_input') }
   get btnActive ()    { return $(this.rolarAte('button-Active')) }
@@ -22,7 +22,7 @@ class FormPage extends BcBasePage {
   }
 
   async alternarSwitch() {
-    await this.switch.click()
+    await this.switchElement.click()
   }
 
   // Android: lista nativa. iOS: roleta (PickerWheel) que só abre tocando na seta

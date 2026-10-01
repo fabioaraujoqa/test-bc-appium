@@ -15,7 +15,7 @@ describe("Login / Sign up", () => {
     await LoginPage.login(email, senha);
 
     await expect(Alert.titulo).toHaveText("Success");
-    await expect(await LoginPage.msgAlerta()).toEqual("You are logged in!");
+    await expect(Alert.mensagem).toHaveText("You are logged in!");
     await evidenciar("Alerta de login com sucesso");
     await LoginPage.fecharAlerta();
   });
@@ -27,7 +27,7 @@ describe("Login / Sign up", () => {
     await LoginPage.cadastrar(email, senha);
 
     await expect(Alert.titulo).toHaveText("Signed Up!");
-    await expect(await LoginPage.msgAlerta()).toEqual("You successfully signed up!");
+    await expect(Alert.mensagem).toHaveText("You successfully signed up!");
     await evidenciar("Alerta de cadastro com sucesso");
     await LoginPage.fecharAlerta();
   });

@@ -11,7 +11,7 @@ const { carregarEnvBc, identificarDispositivo } = require('./env.loader');
 const { criarHooksDeEvidencias, deveTirarScreenshotFinal } = require('./video.hooks');
 
 const raizProjeto = path.resolve(__dirname, '..');
-const env = carregarEnvBc(raizProjeto);
+const env = carregarEnvBc();
 const ehIos = env.PLATFORM === 'ios';
 const { rotulo: identificadorDispositivo, slug: slugDispositivo } = identificarDispositivo(env);
 
