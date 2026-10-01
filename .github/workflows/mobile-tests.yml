@@ -109,7 +109,7 @@ jobs:
             ~/.android/adb*
           key: avd-30-google_apis-x86_64-pixel_5
 
-      - name: Criar snapshot do AVD
+      - name: Criar AVD em cache
         if: steps.cache-avd.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2.38.0
         with:
@@ -118,11 +118,15 @@ jobs:
           arch: x86_64
           profile: pixel_5
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
           script: echo "AVD criado e em cache"
 
       # Perfil "emulador" do projeto: o emulador do CI sobe como emulator-5554
+      # -no-snapshot força um boot completo (em vez de restaurar um snapshot em
+      # cache), evitando uma condição de corrida em que sys.boot_completed=1
+      # é reportado antes de todos os serviços do sistema (ex.: InputManager)
+      # estarem prontos, o que derrubava o "adb shell input keyevent 82".
       - name: Rodar testes no emulador
         uses: reactivecircus/android-emulator-runner@v2.38.0
         env:
@@ -134,7 +138,7 @@ jobs:
           arch: x86_64
           profile: pixel_5
           force-avd-creation: false
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: npm run allure:reset && npx wdio run config/wdio.conf.js $SPEC_ARGS
 
