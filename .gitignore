@@ -5,6 +5,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+.DS_Store
 
 plano de aula.txt
 
@@ -159,3 +160,6 @@ screenshots/
 test-results/
 # Relatórios salvos com npm run report:bc:arquivo
 relatorios/
+
+# Logs do serviço do BrowserStack
+log/

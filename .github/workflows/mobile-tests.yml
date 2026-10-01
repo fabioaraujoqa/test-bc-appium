@@ -125,6 +125,9 @@ jobs:
       # Perfil "emulador" do projeto: o emulador do CI sobe como emulator-5554
       - name: Rodar testes no emulador
         uses: reactivecircus/android-emulator-runner@v2.38.0
+        env:
+          LOGIN_EMAIL: ${{ secrets.LOGIN_EMAIL }}
+          LOGIN_SENHA: ${{ secrets.LOGIN_SENHA }}
         with:
           api-level: 30
           target: google_apis
@@ -136,6 +139,10 @@ jobs:
           script: npm run allure:reset && npx wdio run config/wdio.bc.conf.js $SPEC_ARGS
 
       # Os passos abaixo rodam mesmo com teste falhando, para o relatório sair
+      - name: Registrar no Allure se nenhum teste rodou
+        if: ${{ failure() }}
+        run: node scripts/allure-sem-resultados.js "Android · emulador (CI)"
+
       - name: Guardar resultados do Allure
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -187,10 +194,16 @@ jobs:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
           BROWSERSTACK_APP_ID: ${{ secrets.BROWSERSTACK_APP_ID }}
+          LOGIN_EMAIL: ${{ secrets.LOGIN_EMAIL }}
+          LOGIN_SENHA: ${{ secrets.LOGIN_SENHA }}
         run: |
           # SPEC_ARGS é "--spec <arquivo>" (ou vazio): precisa ser dividido em palavras
           # shellcheck disable=SC2086
           npm run allure:reset && npx wdio run config/wdio.browserstack.conf.js $SPEC_ARGS
+
+      - name: Registrar no Allure se nenhum teste rodou
+        if: ${{ failure() }}
+        run: node scripts/allure-sem-resultados.js "Android · browserstack"
 
       - name: Guardar resultados do Allure
         if: ${{ !cancelled() }}
@@ -236,6 +249,34 @@ jobs:
           for arquivo in history.json history-trend.json duration-trend.json categories-trend.json retry-trend.json; do
             curl -fsSL "$PAGES_URL/history/$arquivo" -o "allure-results/history/$arquivo" || rm -f "allure-results/history/$arquivo"
           done
+
+      # Preenche os blocos "Environment" e "Executors" da página inicial do relatório
+      - name: Informações da execução no relatório
+        env:
+          ALVOS: ${{ needs.emulador.result != 'skipped' && 'emulador ' || '' }}${{ needs.browserstack.result != 'skipped' && 'browserstack' || '' }}
+          PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "Alvos=$ALVOS"
+            echo "Suite=$SUITE"
+            echo "App=WebdriverIO Demo 2.2.0"
+            echo "Branch=$GITHUB_REF_NAME"
+            echo "Commit=${GITHUB_SHA::7}"
+            echo "Gatilho=$GITHUB_EVENT_NAME"
+          } > allure-results/environment.properties
+          cat > allure-results/executor.json <<JSON
+          {
+            "name": "GitHub Actions",
+            "type": "github",
+            "url": "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY",
+            "buildOrder": $GITHUB_RUN_NUMBER,
+            "buildName": "$GITHUB_WORKFLOW #$GITHUB_RUN_NUMBER",
+            "buildUrl": "$RUN_URL",
+            "reportUrl": "$PAGES_URL",
+            "reportName": "Testes mobile"
+          }
+          JSON
 
       - name: Gerar relatório Allure
         run: npm run report:bc:generate

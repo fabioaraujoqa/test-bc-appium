@@ -14,12 +14,13 @@ config/
 ├── video.hooks.js             evidenciar(), screenshot final, vídeo de falha
 └── appium-mcp.capabilities.json   usado só pelo MCP (.mcp.json)
 tests/
+├── fixtures/usuarios.json     massa de cadastro (válida e inválida)
 ├── pageobjects/               base.page.js (genérica), bc.base.page.js (do app) e uma page por tela
 ├── specs/
 │   ├── smoke.spec.js          comum a Android e iOS
 │   ├── android/               roda nos perfis Android
 │   └── ios/                   roda no perfil simulador
-└── utils/
+└── utils/                     usuarios.js (lê .env + fixture), swipe.js
 scripts/test-bc-parallel.sh    vários aparelhos, em paralelo ou em sequência
 app/                           android-app-wdio.apk e ios-app-wdio.app (fora do git)
 ```
@@ -38,6 +39,27 @@ Regras do loader:
 - Chave vazia no `.env` é ignorada e vale o padrão do código (`Pixel_5`, `emulator-5554`, `iPhone 16`/`18.5`).
 - Perfil físico (`celular`, `tablet`) sem UDID, ou com UDID de emulador, **falha logo** dizendo qual chave preencher.
 - Perfil `emulador` com UDID que não começa com `emulator-` só gera um **aviso** no console.
+
+## Massa de dados: login e cadastro
+
+| Dado | Onde | Por quê |
+|---|---|---|
+| Usuário de **login** | `.env`: `LOGIN_EMAIL`, `LOGIN_SENHA` (no CI: secrets de mesmo nome) | É credencial: não vai para o git |
+| **Cadastro** válido e inválidos | `tests/fixtures/usuarios.json` | É massa de teste, versionada |
+
+Os specs leem os dados por `tests/utils/usuarios.js`:
+
+```js
+import { usuarioLogin, usuariosCadastro } from "../../utils/usuarios";
+
+const { email, senha } = usuarioLogin();            // .env
+const novo = usuariosCadastro.valido();             // fixture, e-mail único por execução
+for (const caso of usuariosCadastro.invalidos) {}   // um teste por caso inválido
+```
+
+- `{timestamp}` no e-mail da fixture vira um valor único por execução, para o cadastro não repetir e-mail.
+- Cada item de `cadastroInvalido` vira um teste (`Não deve cadastrar com <descricao>`) que confere a mensagem em `erro`. Para um cenário novo, basta acrescentar um item no JSON (`confirmacao` é opcional e, se ausente, repete a senha).
+- Sem `LOGIN_EMAIL`/`LOGIN_SENHA`, o teste de login falha com mensagem dizendo o que preencher.
 
 ## Perfis de dispositivo
 

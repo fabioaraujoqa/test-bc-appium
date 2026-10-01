@@ -1,0 +1,30 @@
+{
+  "cadastro": {
+    "valido": {
+      "descricao": "dados válidos",
+      "email": "qa.cadastro+{timestamp}@exemplo.com",
+      "senha": "Senha@123"
+    }
+  },
+  "cadastroInvalido": [
+    {
+      "descricao": "e-mail sem @",
+      "email": "email-sem-arroba",
+      "senha": "Senha@123",
+      "erro": "Please enter a valid email address"
+    },
+    {
+      "descricao": "senha com menos de 8 caracteres",
+      "email": "qa.cadastro@exemplo.com",
+      "senha": "123",
+      "erro": "Please enter at least 8 characters"
+    },
+    {
+      "descricao": "confirmação diferente da senha",
+      "email": "qa.cadastro@exemplo.com",
+      "senha": "Senha@123",
+      "confirmacao": "Outra@456",
+      "erro": "Please enter the same password"
+    }
+  ]
+}

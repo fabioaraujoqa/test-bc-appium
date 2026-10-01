@@ -1,13 +1,13 @@
 # Teste BC APP - Mobile
 Appium + WebdriverIO + Allure Report
 
-Suíte de testes automatizados mobile para o app [WebdriverIO Demo](https://github.com/webdriverio/native-demo-app), construída com WebdriverIO, Appium e Allure Report. O objetivo é validar as principais telas do app (login/cadastro, formulários, swipe, drag and drop, menu, permissões, webview e gerenciamento de dados) em Android (emulador, aparelho físico e BrowserStack) e iOS (simulador e BrowserStack).
+Suíte de testes automatizados mobile para o app [WebdriverIO Demo](https://github.com/webdriverio/native-demo-app), construída com WebdriverIO, Appium e Allure Report. O objetivo é validar as principais telas do app (login/cadastro, formulários, swipe, drag and drop, menu lateral e permissões) em Android (emulador, aparelho físico e BrowserStack) e iOS (simulador e BrowserStack).
 
 ## Pré-requisitos
 
-- [Node.js](https://nodejs.org/) 18 ou superior
+- [Node.js](https://nodejs.org/) 22 (mesma versão do CI)
 - npm (instalado junto com o Node.js)
-- JDK 11 e [Appium](https://appium.io/docs/en/2.2/quickstart/install/) 2.x (`npm i --location=global appium`) com o driver `uiautomator2` instalado (`appium driver install uiautomator2`)
+- JDK 11 ou superior e [Appium](https://appium.io/docs/en/latest/quickstart/install/) 3.x (`npm i -g appium`) com o driver `uiautomator2` (`appium driver install uiautomator2`) e, para iOS, o `xcuitest` (`appium driver install xcuitest`)
 - Android Studio com SDK e ao menos um AVD criado (para rodar no emulador) e/ou um aparelho físico com depuração USB habilitada
 - Xcode e um simulador iOS (opcional, só para rodar a suíte de iOS no macOS)
 - `ffmpeg` (opcional, só para gravação de vídeo de falha no iOS): `brew install ffmpeg`
@@ -30,6 +30,7 @@ Guia detalhado de instalação do ambiente (Appium, Android SDK, variáveis `JAV
 
    | Variável | Descrição |
    |----------|-----------|
+   | `LOGIN_EMAIL` / `LOGIN_SENHA` | Usuário de login usado nos specs de login (no CI, vem dos secrets) |
    | `DEVICE_PROFILE` | Perfil do aparelho: `emulador` (padrão), `celular`, `tablet` ou `simulador` |
    | `ANDROID_AVD` / `EMULADOR_UDID` | AVD e UDID do emulador (padrão `Pixel_5` / `emulator-5554`) |
    | `CELULAR_UDID` / `TABLET_UDID` | UDID do aparelho físico (`adb devices`), obrigatório para os perfis `celular`/`tablet` |
@@ -89,7 +90,19 @@ npm run test:bc:devices:parallel   # os mesmos três, em paralelo
 
 ## Cenários de teste
 
-24 cenários no total, cobrindo as 8 telas do app, em Android (emulador, celular físico, BrowserStack) e iOS (simulador, BrowserStack).
+29 cenários, cobrindo 7 telas do app: Home, Login/Sign up, Forms, Menu lateral, Drag, Swipe e Permissions.
+
+| Spec | Plataforma | Cenários |
+|------|------------|----------|
+| `smoke.spec.js` | Android e iOS | 3 |
+| `android/login.spec.js` | Android | 6 (3 deles vêm da fixture) |
+| `android/form.spec.js` | Android | 7 |
+| `android/swipe.spec.js` | Android | 4 |
+| `android/drag.spec.js` | Android | 2 |
+| `android/menu.spec.js` | Android | 2 |
+| `android/permissions.spec.js` | Android | 1 |
+| `ios/form.spec.js` | iOS | 3 |
+| `ios/login.spec.js` | iOS | 1 |
 
 ### Smoke — comum a Android e iOS (`smoke.spec.js`)
 
@@ -99,50 +112,51 @@ npm run test:bc:devices:parallel   # os mesmos três, em paralelo
 | Deve exibir a barra inferior com todas as telas |
 | Deve navegar para Login e Forms |
 
-### Login / Sign up (`android/login.spec.js`, `ios/login.spec.js`)
+### Login / Sign up (`android/login.spec.js`)
 
-| Cenário |
-|---------|
-| Deve fazer login com sucesso |
-| Deve cadastrar com sucesso |
-| Deve exibir as validações do cadastro com campos vazios |
+| Cenário | Dados |
+|---------|-------|
+| Deve fazer login com sucesso | `.env` (`LOGIN_EMAIL` / `LOGIN_SENHA`) |
+| Deve cadastrar com sucesso | fixture, `cadastro.valido` (e-mail único por execução) |
+| Deve exibir as validações do cadastro com campos vazios | — |
+| Não deve cadastrar com e-mail sem @ | fixture, `cadastroInvalido` |
+| Não deve cadastrar com senha com menos de 8 caracteres | fixture, `cadastroInvalido` |
+| Não deve cadastrar com confirmação diferente da senha | fixture, `cadastroInvalido` |
 
-### Forms (`android/form.spec.js`, `ios/form.spec.js`)
+### Forms (`android/form.spec.js`)
 
 | Cenário |
 |---------|
 | Deve preencher campo de texto e validar |
-| Deve alternar o switch entre On e Off |
-| Deve selecionar um item no dropdown |
-| Deve abrir o alerta do botão Ativo e fechar com Ask Me later / OK / Cancel |
+| Deve alternar para Off o switch |
+| Deve alternar para On o switch |
+| Seleciona um item no dropdown |
+| Deve clicar no botão Ativo e depois em Ask Me later |
+| Deve clicar no botão Ativo e depois em OK |
+| Deve clicar no botão Ativo e depois em Cancel |
 
-### Menu lateral (`android/menu.spec.js`)
-
-| Cenário |
-|---------|
-| Deve listar todas as telas no menu |
-| Deve navegar para uma tela pelo menu |
-
-### Data management (`android/data.spec.js`)
+### Swipe (`android/swipe.spec.js`)
 
 | Cenário |
 |---------|
-| Deve salvar um valor na memória |
-| Deve limpar o valor salvo |
+| Deve revelar o segundo card |
+| Deve revelar o terceiro card |
+| Deve revelar o quarto card |
+| Deve voltar para o primeiro card |
 
 ### Drag and Drop (`android/drag.spec.js`)
 
 | Cenário |
 |---------|
 | Deve arrastar a peça até o lugar certo |
-| Deve montar o quebra-cabeça completo |
+| Deve montar o quebra-cabeça completo com dragAndDrop |
 
-### Swipe (`android/swipe.spec.js`)
+### Menu lateral (`android/menu.spec.js`)
 
 | Cenário |
 |---------|
-| Deve revelar o segundo, terceiro e quarto card |
-| Deve voltar para o primeiro card |
+| Deve listar todas as telas |
+| Deve navegar para uma tela pelo menu |
 
 ### Permissions (`android/permissions.spec.js`)
 
@@ -150,14 +164,16 @@ npm run test:bc:devices:parallel   # os mesmos três, em paralelo
 |---------|
 | Deve exibir um switch para cada permissão (câmera, microfone, localização, fotos) |
 
-### Webview (`android/webview.spec.js`)
+### iOS (`ios/login.spec.js`, `ios/form.spec.js`)
 
 | Cenário |
 |---------|
-| Deve carregar o site do WebdriverIO |
-| Deve disponibilizar o contexto web |
+| Deve fazer login com sucesso (`.env`) |
+| Deve preencher campo de texto |
+| Deve abrir o alerta do botão Active e fechar com OK |
+| Deve abrir o alerta do botão Active e fechar com Ask me later |
 
-> A cobertura de iOS é mínima de propósito (smoke + login + forms); os demais specs rodam só em Android. Os seletores de cada tela, em Android e iOS, estão documentados em [`docs/mapeamento-elementos.md`](docs/mapeamento-elementos.md).
+> A cobertura de iOS é mínima de propósito (smoke + login + forms). Os seletores de cada tela, em Android e iOS, estão em [`docs/mapeamento-elementos.md`](docs/mapeamento-elementos.md).
 
 ## Estratégias utilizadas
 
@@ -165,7 +181,22 @@ npm run test:bc:devices:parallel   # os mesmos três, em paralelo
 Os cenários foram definidos com apoio do Copilot a partir da exploração manual do app (via Appium Inspector e MCP do Appium), cobrindo as 8 telas de navegação do app de demonstração. A implementação do código (page objects, specs, hooks de evidência) foi feita manualmente, com revisão do Copilot para consistência e cobertura.
 
 ### Dados de teste
-Não há dependência de bibliotecas externas de geração de massa. Os dados usados nos formulários (email, senha, texto) são fixos nos próprios specs, já que o app de demonstração não persiste cadastro entre execuções.
+Os specs não têm dados fixos. A origem de cada dado depende do que ele é:
+
+| Dado | Onde fica | Por quê |
+|------|-----------|---------|
+| Usuário de **login** | `.env`: `LOGIN_EMAIL` / `LOGIN_SENHA` (no CI, secrets de mesmo nome) | É credencial: não vai para o git |
+| **Cadastro** válido e inválidos | [`tests/fixtures/usuarios.json`](tests/fixtures/usuarios.json) | É massa de teste: versionada, junto com o resultado esperado |
+
+Os specs leem os dois por [`tests/utils/usuarios.js`](tests/utils/usuarios.js):
+
+```js
+const { email, senha } = usuarioLogin();            // .env
+const novo = usuariosCadastro.valido();             // fixture, e-mail único ({timestamp})
+for (const caso of usuariosCadastro.invalidos) {}   // um teste por caso inválido
+```
+
+Cada item de `cadastroInvalido` traz a `descricao`, os dados e a mensagem de `erro` esperada, e vira um teste próprio (`Não deve cadastrar com <descricao>`). Para um cenário novo, basta acrescentar um item no JSON. Não há dependência de bibliotecas externas de geração de massa.
 
 ### Page Objects
 Definidos em `tests/pageobjects/`, com uma classe por tela (`login.page.js`, `form.page.js`, `menu.page.js`, etc.) estendendo `base.page.js` (genérico) e `bc.base.page.js` (específico do app, com `reiniciarNaTelaInicial()` e o helper `porTexto()` que resolve o seletor certo para Android e iOS).
@@ -193,13 +224,32 @@ npm run report:bc:arquivo    # gera um relatório em arquivo único, com as evid
 
 ## CI/CD Pipeline
 
-O projeto usa GitHub Actions ([`.github/workflows/cy.yml`](.github/workflows/cy.yml)) para instalar dependências e rodar a suíte Android no BrowserStack a cada push e pull request, com upload dos logs (`logs/`) em caso de falha.
+O workflow [`.github/workflows/mobile-tests.yml`](.github/workflows/mobile-tests.yml) roda no GitHub Actions:
 
-As credenciais do BrowserStack ficam em **Settings → Secrets**: `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY` e `BROWSERSTACK_APP_ID` (app_url do `.apk` já enviado ao App Automate).
+| Gatilho | O que roda |
+|---------|------------|
+| Push na `main` | Smoke no emulador Android do GitHub; o relatório é publicado no GitHub Pages |
+| Pull request | Smoke no emulador; o PR recebe um comentário com o link do relatório |
+| Manual (*Actions → Run workflow*) | Escolha do **alvo** (`emulador`, `browserstack` ou `ambos`) e da **suíte** (`smoke`, `completa` ou um spec: `login`, `form`, `drag`...) |
+
+O BrowserStack só roda no disparo manual, para não gastar os minutos da conta a cada commit. Se um alvo falhar antes de rodar qualquer teste (credencial ausente, emulador que não subiu), ele entra no relatório como **"Execução não iniciada"** (status *broken*), com o link do log, em vez de sumir e deixar o relatório 100% verde. O APK do emulador é baixado da [release oficial v2.2.0](https://github.com/webdriverio/native-demo-app/releases/tag/v2.2.0) do app (a pasta `app/` não é versionada).
+
+### Secrets necessários (*Settings → Secrets and variables → Actions*)
+
+| Secret | Uso |
+|--------|-----|
+| `LOGIN_EMAIL` / `LOGIN_SENHA` | Usuário de login dos specs |
+| `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY` | Credenciais do BrowserStack App Automate |
+| `BROWSERSTACK_APP_ID` | `app_url` (`bs://...`) do `.apk` já enviado ao BrowserStack |
+
+Para publicar o relatório, o GitHub Pages precisa estar com **Source: GitHub Actions** (*Settings → Pages*).
 
 ### Visualizar relatórios
 
-Os resultados do BrowserStack App Automate (incluindo o vídeo de cada sessão) ficam disponíveis no painel da conta, com o link do build no log do workflow. Localmente, o relatório Allure é gerado em `allure-report/` e pode ser aberto com `npm run report:bc:open`.
+- **Na `main`:** o Allure combinado (emulador + BrowserStack, separados por aparelho, com histórico de tendência) fica no GitHub Pages: `https://fabioaraujoqa.github.io/test-bc-appium/`.
+- **Em PR ou execução manual:** baixe o artefato `allure-report` na página da execução.
+- **BrowserStack:** o vídeo de cada sessão fica no painel da conta (o link do build aparece no log).
+- **Localmente:** `npm run report:bc:open`, ou `npm run report:bc:arquivo` para um arquivo único.
 
 ## Estrutura do projeto
 
@@ -213,12 +263,14 @@ Os resultados do BrowserStack App Automate (incluindo o vídeo de cada sessão) 
 │   ├── video.hooks.js            # evidenciar(), screenshot final, vídeo de falha
 │   └── appium-mcp.capabilities.json  # usado só pelo MCP (.mcp.json)
 ├── tests/
+│   ├── fixtures/
+│   │   └── usuarios.json         # massa de cadastro (válida e inválida)
 │   ├── pageobjects/              # base.page.js, bc.base.page.js e uma page por tela
 │   ├── specs/
 │   │   ├── smoke.spec.js         # comum a Android e iOS
 │   │   ├── android/              # specs exclusivos do perfil Android
 │   │   └── ios/                  # specs exclusivos do perfil iOS
-│   └── utils/
+│   └── utils/                    # usuarios.js (lê .env + fixture), swipe.js
 ├── scripts/
 │   └── test-bc-parallel.sh       # roda vários aparelhos, em paralelo ou em sequência
 ├── docs/
@@ -227,7 +279,7 @@ Os resultados do BrowserStack App Automate (incluindo o vídeo de cada sessão) 
 │       └── operacao-banco-carrefour.md  # como operar a suíte (perfis, relatório, evidências)
 ├── .github/
 │   └── workflows/
-│       └── cy.yml                # workflow do GitHub Actions
+│       └── mobile-tests.yml      # emulador (push/PR) + BrowserStack (manual) + Allure no Pages
 ├── .env.example                  # template do .env
 ├── wdio.conf.js
 ├── package.json

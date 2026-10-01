@@ -19,6 +19,8 @@ class LoginPage extends BcBasePage {
   get erroSenha()    { return $(this.porTexto('Please enter at least 8 characters')) }
   get erroRepetirSenha() { return $(this.porTexto('Please enter the same password')) }
 
+  mensagemDeErro(texto) { return $(this.porTexto(texto)) }
+
   // Métodos
   async login(email, senha) {
     await this.email.setValue(email)
@@ -33,10 +35,11 @@ class LoginPage extends BcBasePage {
     if (await this.repetirSenha.isExisting()) await this.repetirSenha.clearValue()
   }
 
-  async cadastrar(email, senha) {
+  // confirmacao diferente da senha serve para testar a validação "Please enter the same password"
+  async cadastrar(email, senha, confirmacao = senha) {
     await this.email.setValue(email)
     await this.senha.setValue(senha)
-    await this.repetirSenha.setValue(senha)
+    await this.repetirSenha.setValue(confirmacao)
     await this.fecharTeclado()
     await this.btnSignUp.click()
   }
