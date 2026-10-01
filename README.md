@@ -53,6 +53,7 @@ npm run test:all -- --spec tests/specs/android/form.spec.js   # um spec só
 | `test:devices -- --sequencial` | Os três aparelhos, um por vez |
 | `report` | Gera e abre o relatório Allure |
 | `report:arquivo` | Relatório em arquivo único (abre com dois cliques), com as evidências de falha, em `relatorios/<data_hora>/` |
+| `lint:workflow` | Valida o workflow do GitHub Actions com o [actionlint](https://github.com/rhysd/actionlint) (`brew install actionlint`) |
 
 ## Cenários de teste
 

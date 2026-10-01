@@ -100,33 +100,13 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Cache do AVD
-        id: cache-avd
-        uses: actions/cache@v6
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-30-google_apis-x86_64-pixel_5
-
-      - name: Criar AVD em cache
-        if: steps.cache-avd.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2.38.0
-        with:
-          api-level: 30
-          target: google_apis
-          arch: x86_64
-          profile: pixel_5
-          force-avd-creation: false
-          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: false
-          script: echo "AVD criado e em cache"
-
-      # Perfil "emulador" do projeto: o emulador do CI sobe como emulator-5554
-      # -no-snapshot força um boot completo (em vez de restaurar um snapshot em
-      # cache), evitando uma condição de corrida em que sys.boot_completed=1
-      # é reportado antes de todos os serviços do sistema (ex.: InputManager)
-      # estarem prontos, o que derrubava o "adb shell input keyevent 82".
+      # Perfil "emulador" do projeto: o emulador do CI sobe como emulator-5554.
+      # -no-snapshot força um boot completo (em vez de restaurar um snapshot),
+      # evitando uma condição de corrida em que sys.boot_completed=1 é reportado
+      # antes de todos os serviços do sistema (ex.: InputManager) estarem prontos,
+      # o que derrubava o "adb shell input keyevent 82". Como o boot é sempre
+      # completo, não há cache de AVD/snapshot: o AVD é criado aqui (segundos).
+      # cores/ram-size: a máquina do GitHub tem 4 vCPUs; o padrão do emulador usa 2.
       - name: Rodar testes no emulador
         uses: reactivecircus/android-emulator-runner@v2.38.0
         env:
@@ -137,6 +117,8 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_5
+          cores: 4
+          ram-size: 4096M
           force-avd-creation: false
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
