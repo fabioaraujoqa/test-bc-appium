@@ -1,0 +1,16 @@
+{
+  "android": {
+    "platformName": "Android",
+    "appium:automationName": "UiAutomator2",
+    "appium:avd": "Pixel_5",
+    "appium:app": "/Users/fabioaraujo/Desktop/teste-bc/repositorio/test-bc-appium/app/android-app-wdio.apk",
+    "appium:autoGrantPermissions": true
+  },
+  "ios": {
+    "platformName": "iOS",
+    "appium:automationName": "XCUITest",
+    "appium:deviceName": "iPhone 16",
+    "appium:platformVersion": "18.5",
+    "appium:app": "/Users/fabioaraujo/Desktop/teste-bc/repositorio/test-bc-appium/app/ios-app-wdio.app"
+  }
+}

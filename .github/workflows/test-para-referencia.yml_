@@ -1,0 +1,113 @@
+name: Teste de API com Allure Report
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      ambiente:
+        description: 'Ambiente'
+        type: choice
+        default: local
+        options: [ local, dev ]
+      suite:
+        description: 'Suíte de testes'
+        type: choice
+        default: todos
+        options: [ todos, smoke, alta, seguranca ]
+
+permissions:
+  contents: read
+  pull-requests: write
+  pages: write
+  id-token: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.ambiente || 'local' }}
+    env:
+      AMBIENTE: ${{ inputs.ambiente || 'local' }}
+      BASE_URL: ${{ vars.BASE_URL || 'http://localhost:3000' }}
+
+    steps:
+      - name: Clonar repositório
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Iniciar servidor local
+        if: env.AMBIENTE == 'local'
+        run: npm run server &
+
+      - name: Aguardar ambiente pronto
+        run: npx wait-on -t 60000 "$BASE_URL"
+
+      - name: Definir suíte
+        id: suite
+        env:
+          SUITE: ${{ inputs.suite || (github.event_name == 'pull_request' && 'smoke' || 'todos') }}
+        run: |
+          [ "$SUITE" = "todos" ] && TAGS="" || TAGS="@$SUITE"
+          echo "nome=$SUITE" >> "$GITHUB_OUTPUT"
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
+          echo "Ambiente: **$AMBIENTE** ($BASE_URL) — Suíte: **$SUITE**" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Rodar testes
+        env:
+          CYPRESS_BASE_URL: ${{ env.BASE_URL }}
+          CYPRESS_USUARIO_EMAIL: ${{ secrets.USUARIO_EMAIL }}
+          CYPRESS_USUARIO_SENHA: ${{ secrets.USUARIO_SENHA }}
+          TAGS: ${{ steps.suite.outputs.tags }}
+        run: |
+          if [ -n "$TAGS" ]; then
+            npm test -- --expose grepTags="$TAGS"
+          else
+            npm test
+          fi
+
+      # Os passos abaixo rodam mesmo com testes falhando, para publicar o relatório
+      - name: Gerar relatório Allure
+        if: ${{ !cancelled() }}
+        run: npm run allure:report
+
+      - name: Empacotar relatório para o GitHub Pages
+        if: ${{ !cancelled() }}
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./allure-report
+
+      - name: Comentar PR com link do relatório
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const runNumber = context.runId;
+            const reportUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${runNumber}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Ambiente: **${{ env.AMBIENTE }}** — Suíte executada: **${{ steps.suite.outputs.nome }}**\n\nAbrir Relatório Allure: [Ver Relatório](${reportUrl})`
+            });
+
+  deploy:
+    needs: test
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar relatório no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

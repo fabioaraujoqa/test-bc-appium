@@ -6,6 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+plano de aula.txt
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
@@ -81,7 +83,6 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
-.output
 
 # Gatsby files
 .cache/
@@ -92,8 +93,9 @@ dist
 # vuepress build output
 .vuepress/dist
 
-# vuepress v2.x temp directory
+# vuepress v2.x temp and cache directory
 .temp
+.cache
 
 # Sveltekit cache directory
 .svelte-kit/
@@ -125,9 +127,6 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
-# pnpm
-.pnpm-store
-
 # yarn v3
 .pnp.*
 .yarn/*
@@ -137,7 +136,30 @@ dist
 !.yarn/sdks
 !.yarn/versions
 
-# Vite files
+# Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-.vite/
+
+#customizado 
+.env
+allure-results/
+allure-report/
+
+
+# screenshots do appium-mcp
+mcp-screenshots/
+
+# ===== Projeto bc =====
+# Apps de teste (grandes, fora do git)
+app/*.apk
+app/*.app/
+app/*.ipa
+# Evidências e resultados
+screenshots/
+test-results/
+# Perfis de dispositivo: só o modelo é versionado
+.env.bc
+.env.bc.*
+!.env.bc.example
+# Relatórios salvos com npm run report:bc:arquivo
+relatorios/
